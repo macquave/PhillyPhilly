@@ -54,10 +54,16 @@ body {
 }
 
 .logo {
-  font-size: 72px;
-  line-height: 1;
   margin-bottom: 16px;
-  filter: drop-shadow(0 0 24px rgba(232,86,26,.6));
+}
+
+.hero-img {
+  width: 150px;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 3px solid var(--primary);
+  box-shadow: 0 0 32px rgba(232,86,26,.5);
 }
 
 .login-card h1 {
