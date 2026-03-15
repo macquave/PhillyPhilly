@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>March Madness Picks 🏀</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- =====================================================================
+     LOGIN SCREEN
+====================================================================== -->
+<div id="login-screen" class="screen">
+  <div class="login-card">
+    <div class="logo">🏀</div>
+    <h1>March Madness<br>Pick'em</h1>
+    <p class="subtitle">Bachelor Party Edition · ATS Picks</p>
+    <form id="login-form">
+      <input
+        id="name-input"
+        type="text"
+        placeholder="Enter your name"
+        maxlength="30"
+        autocomplete="off"
+        autocorrect="off"
+        spellcheck="false"
+        required
+      />
+      <button type="submit" class="btn btn-primary btn-lg">Let's Go! 🏆</button>
+    </form>
+  </div>
+</div>
+
+<!-- =====================================================================
+     MAIN APP
+====================================================================== -->
+<div id="main-app" class="screen hidden">
+
+  <!-- Header -->
+  <header class="app-header">
+    <div class="header-top">
+      <span class="header-logo">🏀</span>
+      <span class="header-title">March Madness</span>
+      <button id="logout-btn" class="btn-ghost">← Switch</button>
+    </div>
+    <div class="user-pill">Playing as <strong id="username-display">—</strong></div>
+    <!-- Tabs -->
+    <nav class="tabs">
+      <button class="tab-btn active" data-tab="picks">My Picks</button>
+      <button class="tab-btn" data-tab="all-games">All Games</button>
+      <button class="tab-btn" data-tab="leaderboard">Leaderboard</button>
+    </nav>
+  </header>
+
+  <!-- ---- TAB: MY PICKS ---- -->
+  <section id="tab-picks" class="tab-content">
+    <div id="picks-summary" class="stats-bar hidden">
+      <div class="stat">
+        <span class="stat-num" id="stat-correct">0</span>
+        <span class="stat-label">Correct</span>
+      </div>
+      <div class="stat">
+        <span class="stat-num" id="stat-wrong">0</span>
+        <span class="stat-label">Wrong</span>
+      </div>
+      <div class="stat">
+        <span class="stat-num" id="stat-pending">0</span>
+        <span class="stat-label">Pending</span>
+      </div>
+      <div class="stat">
+        <span class="stat-num" id="stat-pct">—</span>
+        <span class="stat-label">Win %</span>
+      </div>
+    </div>
+    <div id="picks-games-list">
+      <div class="loading">Loading games…</div>
+    </div>
+  </section>
+
+  <!-- ---- TAB: ALL GAMES ---- -->
+  <section id="tab-all-games" class="tab-content hidden">
+    <p class="tab-description">All tournament games — click a team to make your pick.</p>
+    <div id="all-games-list">
+      <div class="loading">Loading games…</div>
+    </div>
+  </section>
+
+  <!-- ---- TAB: LEADERBOARD ---- -->
+  <section id="tab-leaderboard" class="tab-content hidden">
+    <div id="leaderboard-list">
+      <div class="loading">Loading standings…</div>
+    </div>
+  </section>
+
+</div>
+
+<!-- =====================================================================
+     ADMIN PANEL (hidden, accessible via "admin" tab or URL #admin)
+====================================================================== -->
+<div id="admin-modal" class="modal hidden">
+  <div class="modal-overlay" id="admin-overlay"></div>
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>Admin Panel</h2>
+      <button class="btn-ghost" id="admin-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <label>Admin Password</label>
+      <input type="password" id="admin-pw" placeholder="Password" />
+
+      <hr/>
+      <h3>Sync Games &amp; Scores</h3>
+      <p class="hint">Pulls latest games and spreads from The Odds API, then grades completed picks.</p>
+      <button class="btn btn-secondary" id="admin-sync-btn">Sync Now</button>
+      <div id="admin-sync-result" class="result-msg"></div>
+
+      <hr/>
+      <h3>Enter Game Result Manually</h3>
+      <p class="hint">Use this if the API doesn't auto-update a result.</p>
+      <label>Game</label>
+      <select id="admin-game-select">
+        <option value="">— select a game —</option>
+      </select>
+      <div class="score-row">
+        <div>
+          <label id="admin-home-label">Home Score</label>
+          <input type="number" id="admin-home-score" min="0" max="200" placeholder="0" />
+        </div>
+        <div class="vs-divider">–</div>
+        <div>
+          <label id="admin-away-label">Away Score</label>
+          <input type="number" id="admin-away-score" min="0" max="200" placeholder="0" />
+        </div>
+      </div>
+      <button class="btn btn-primary" id="admin-result-btn">Save Result</button>
+      <div id="admin-result-msg" class="result-msg"></div>
+
+      <hr/>
+      <h3>Add Game Manually</h3>
+      <p class="hint">Add a game that isn't showing up from the API.</p>
+      <label>Away Team</label>
+      <input type="text" id="mg-away" placeholder="e.g. North Carolina" />
+      <label>Home Team</label>
+      <input type="text" id="mg-home" placeholder="e.g. Duke" />
+      <label>Home Spread (negative = home favored)</label>
+      <input type="number" id="mg-spread" step="0.5" placeholder="e.g. -5.5" />
+      <label>Game Time (local)</label>
+      <input type="datetime-local" id="mg-time" />
+      <label>Round</label>
+      <select id="mg-round">
+        <option>First Four</option>
+        <option>Round of 64</option>
+        <option>Round of 32</option>
+        <option>Sweet 16</option>
+        <option>Elite 8</option>
+        <option>Final Four</option>
+        <option>Championship</option>
+      </select>
+      <button class="btn btn-secondary" id="mg-add-btn">Add Game</button>
+      <div id="mg-result-msg" class="result-msg"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Admin trigger: tap header logo 5 times -->
+<div id="admin-tap-zone" style="position:fixed;bottom:16px;right:16px;opacity:0;width:48px;height:48px;"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
