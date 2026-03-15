@@ -628,6 +628,170 @@ label { display: block; font-size: .8rem; color: var(--muted); margin-bottom: 4p
   margin: 0 2px;
 }
 
+/* --- The Pool Tab --------------------------------------- */
+.pool-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+.pool-card-header {
+  padding: 10px 14px 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pool-game-time {
+  font-size: .78rem;
+  color: var(--muted);
+  font-weight: 600;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+  flex: 1;
+}
+
+/* Final score row */
+.pool-score {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 14px 8px;
+  font-size: .82rem;
+  flex-wrap: wrap;
+}
+.pool-score-team { color: var(--muted); font-weight: 600; }
+.pool-score-team.pool-score--cover { color: var(--success); }
+.pool-score-sep { color: var(--border); }
+
+/* In-progress badge */
+.pool-inprogress {
+  padding: 2px 14px 8px;
+  font-size: .75rem;
+  color: var(--muted);
+  font-weight: 700;
+  letter-spacing: .04em;
+}
+
+/* Two-column sides layout */
+.pool-sides {
+  display: flex;
+  border-top: 1px solid var(--border);
+}
+
+.pool-side {
+  flex: 1;
+  padding: 12px 14px;
+  min-width: 0;
+  transition: background .2s;
+}
+
+.pool-divider {
+  width: 1px;
+  background: var(--border);
+  flex-shrink: 0;
+}
+
+/* Winner side glows green; loser side fades */
+.pool-side--winner {
+  background: rgba(34,197,94,.07);
+}
+.pool-side--loser {
+  opacity: .55;
+}
+
+.pool-side-label {
+  font-size: .65rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 3px;
+}
+
+.pool-side-team {
+  font-size: .92rem;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pool-side-spread {
+  font-size: .75rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 8px;
+}
+
+/* Chips area */
+.pool-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-height: 24px;
+  margin-bottom: 6px;
+}
+
+.pool-chip {
+  font-size: .72rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 20px;
+  background: var(--surface2);
+  color: var(--text-dim);
+  border: 1.5px solid var(--border);
+  white-space: nowrap;
+  line-height: 1.3;
+}
+
+/* You highlight */
+.pool-chip--you {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+/* Game locked / in progress (result pending) */
+.pool-chip--pending {
+  background: rgba(232,86,26,.1);
+  color: var(--primary);
+  border-color: rgba(232,86,26,.3);
+}
+
+/* Graded outcomes */
+.pool-chip--correct {
+  background: rgba(34,197,94,.15);
+  color: var(--success);
+  border-color: rgba(34,197,94,.35);
+}
+.pool-chip--wrong {
+  background: rgba(239,68,68,.12);
+  color: var(--danger);
+  border-color: rgba(239,68,68,.3);
+}
+.pool-chip--push {
+  background: rgba(148,163,184,.15);
+  color: var(--muted);
+  border-color: rgba(148,163,184,.3);
+}
+
+.pool-no-picks {
+  font-size: .72rem;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.pool-side-count {
+  font-size: .68rem;
+  color: var(--muted);
+  font-weight: 600;
+  letter-spacing: .03em;
+}
+
 /* --- Util ----------------------------------------------- */
 .text-success { color: var(--success); }
 .text-danger  { color: var(--danger); }

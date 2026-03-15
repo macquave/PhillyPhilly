@@ -125,7 +125,6 @@ async function enterApp() {
   $('#username-display').textContent = currentUser.name;
   await refreshData();
   renderPicksTab();
-  renderAllGamesTab();
 }
 
 async function refreshData() {
@@ -147,8 +146,8 @@ setInterval(async () => {
   if (!currentUser) return;
   await refreshData();
   const activeTab = $('.tab-btn.active')?.dataset.tab;
-  if (activeTab === 'picks')      renderPicksTab();
-  if (activeTab === 'all-games')  renderAllGamesTab();
+  if (activeTab === 'picks')       renderPicksTab();
+  if (activeTab === 'pool')        renderPoolTab();
   if (activeTab === 'leaderboard') renderLeaderboard();
 }, 2 * 60 * 1000);
 
@@ -164,7 +163,7 @@ $$('.tab-btn').forEach(btn => {
     show($(`#tab-${tab}`));
 
     if (tab === 'picks')       { await refreshData(); renderPicksTab(); }
-    if (tab === 'all-games')   { await refreshData(); renderAllGamesTab(); }
+    if (tab === 'pool')        renderPoolTab();
     if (tab === 'leaderboard') renderLeaderboard();
   });
 });
@@ -351,27 +350,103 @@ function updatePicksStats() {
 }
 
 // ---------------------------------------------------------------------------
-// Render: All Games Tab
+// Render: The Pool Tab
 // ---------------------------------------------------------------------------
-function renderAllGamesTab() {
-  const container = $('#all-games-list');
-  container.innerHTML = '';
+async function renderPoolTab() {
+  const container = $('#pool-list');
+  container.innerHTML = '<div class="loading">Loading pool…</div>';
 
-  if (allGames.length === 0) {
-    container.innerHTML = `<div class="empty-state"><span class="big-icon">🏀</span>No games loaded yet.</div>`;
-    return;
-  }
+  try {
+    const poolGames = await apiGet('/api/pool');
+    container.innerHTML = '';
 
-  const rounds = groupByRound(allGames);
-  for (const [round, games] of rounds) {
-    const hdr = document.createElement('div');
-    hdr.className = 'round-header';
-    hdr.textContent = round;
-    container.appendChild(hdr);
-    for (const game of games) {
-      container.appendChild(buildGameCard(game, { showMyPick: true }));
+    if (poolGames.length === 0) {
+      container.innerHTML = `<div class="empty-state"><span class="big-icon">🏀</span>No games loaded yet.</div>`;
+      return;
     }
+
+    const rounds = groupByRound(poolGames);
+    for (const [round, games] of rounds) {
+      const hdr = document.createElement('div');
+      hdr.className = 'round-header';
+      hdr.textContent = round;
+      container.appendChild(hdr);
+      for (const game of games) {
+        container.appendChild(buildPoolCard(game));
+      }
+    }
+  } catch (err) {
+    container.innerHTML = `<div class="empty-state">Failed to load pool data</div>`;
   }
+}
+
+function buildPoolCard(game) {
+  const locked   = new Date(game.game_time) <= new Date();
+  const covering = coveringSide(game);
+
+  // Spread labels
+  const homeSpread = game.spread_home;
+  const awaySpread = homeSpread != null ? -homeSpread : null;
+  const fmtSpread  = v => v == null ? '' : (v > 0 ? `+${v}` : `${v}`);
+
+  // Winner/loser classes applied to each side panel
+  const awaySideClass = covering === 'away' ? 'pool-side--winner'
+                      : covering === 'home' ? 'pool-side--loser' : '';
+  const homeSideClass = covering === 'home' ? 'pool-side--winner'
+                      : covering === 'away' ? 'pool-side--loser' : '';
+
+  function chipsHtml(picks) {
+    if (picks.length === 0) return `<span class="pool-no-picks">No picks yet</span>`;
+    return picks.map(p => {
+      const isYou = currentUser && p.user_id === currentUser.id;
+      let cls = 'pool-chip';
+      if      (p.is_correct === 1)  cls += ' pool-chip--correct';
+      else if (p.is_correct === 0)  cls += ' pool-chip--wrong';
+      else if (p.is_correct === -1) cls += ' pool-chip--push';
+      else if (locked)              cls += ' pool-chip--pending';
+      if (isYou) cls += ' pool-chip--you';
+      const icon = p.is_correct === 1 ? ' ✓' : p.is_correct === 0 ? ' ✗' : p.is_correct === -1 ? ' ~' : '';
+      return `<span class="${cls}">${p.user_name}${icon}</span>`;
+    }).join('');
+  }
+
+  const scoreRow = game.is_final
+    ? `<div class="pool-score">
+        <span class="pool-score-team ${covering === 'away' ? 'pool-score--cover' : ''}">${game.away_team} ${game.away_score}</span>
+        <span class="pool-score-sep">–</span>
+        <span class="pool-score-team ${covering === 'home' ? 'pool-score--cover' : ''}">${game.home_team} ${game.home_score}</span>
+        <span class="final-tag">Final</span>
+       </div>`
+    : locked
+    ? `<div class="pool-inprogress">🔒 In Progress</div>`
+    : '';
+
+  const card = document.createElement('div');
+  card.className = 'pool-card';
+  card.innerHTML = `
+    <div class="pool-card-header">
+      <span class="pool-game-time">${formatGameTime(game.game_time)}</span>
+    </div>
+    ${scoreRow}
+    <div class="pool-sides">
+      <div class="pool-side ${awaySideClass}">
+        <div class="pool-side-label">Away</div>
+        <div class="pool-side-team">${game.away_team}</div>
+        ${awaySpread != null ? `<div class="pool-side-spread">${fmtSpread(awaySpread)}</div>` : ''}
+        <div class="pool-chips">${chipsHtml(game.away_picks)}</div>
+        <div class="pool-side-count">${game.away_picks.length} pick${game.away_picks.length !== 1 ? 's' : ''}</div>
+      </div>
+      <div class="pool-divider"></div>
+      <div class="pool-side ${homeSideClass}">
+        <div class="pool-side-label">Home</div>
+        <div class="pool-side-team">${game.home_team}</div>
+        ${homeSpread != null ? `<div class="pool-side-spread">${fmtSpread(homeSpread)}</div>` : ''}
+        <div class="pool-chips">${chipsHtml(game.home_picks)}</div>
+        <div class="pool-side-count">${game.home_picks.length} pick${game.home_picks.length !== 1 ? 's' : ''}</div>
+      </div>
+    </div>
+  `;
+  return card;
 }
 
 // ---------------------------------------------------------------------------
@@ -503,7 +578,7 @@ $('#admin-sync-btn')?.addEventListener('click', async () => {
     showResult('admin-sync-result', 'Sync complete! Games updated.', true);
     await refreshData();
     renderPicksTab();
-    renderAllGamesTab();
+    renderPoolTab();
   } catch (err) {
     showResult('admin-sync-result', err.message, false);
   } finally {
@@ -563,7 +638,7 @@ $('#admin-result-btn')?.addEventListener('click', async () => {
     $('#admin-away-score').value = '';
     await refreshData();
     renderPicksTab();
-    renderAllGamesTab();
+    renderPoolTab();
     await populateAdminGameSelect();
   } catch (err) {
     showResult('admin-result-msg', err.message, false);
@@ -597,7 +672,7 @@ $('#mg-add-btn')?.addEventListener('click', async () => {
     $('#mg-time').value = '';
     await refreshData();
     renderPicksTab();
-    renderAllGamesTab();
+    renderPoolTab();
     await populateAdminGameSelect();
   } catch (err) {
     showResult('mg-result-msg', err.message, false);

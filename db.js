@@ -222,6 +222,39 @@ function getLeaderboard() {
 // Admin helpers
 // ---------------------------------------------------------------------------
 
+// Get all games enriched with picks grouped by side (for "The Pool" tab)
+function getPoolData() {
+  const db = load();
+  const games = db.games.slice().sort((a, b) => new Date(a.game_time) - new Date(b.game_time));
+
+  return games.map(game => {
+    const gamePicks = db.picks.filter(p => p.game_id === game.id);
+
+    function enrichPicks(side) {
+      return gamePicks
+        .filter(p => p.picked_team === side)
+        .map(p => {
+          const user = db.users.find(u => u.id === p.user_id) || {};
+          return { user_id: p.user_id, user_name: user.name, is_correct: p.is_correct };
+        });
+    }
+
+    return {
+      id:          game.id,
+      home_team:   game.home_team,
+      away_team:   game.away_team,
+      spread_home: game.spread_home,
+      game_time:   game.game_time,
+      round:       game.round,
+      is_final:    game.is_final,
+      home_score:  game.home_score,
+      away_score:  game.away_score,
+      home_picks:  enrichPicks('home'),
+      away_picks:  enrichPicks('away'),
+    };
+  });
+}
+
 // Get all picks enriched with user + game info (for admin view)
 function getAllPicksWithDetails() {
   const data = load();
@@ -311,6 +344,7 @@ module.exports = {
   getPicksForUser,
   getLeaderboard,
   gradePicksByGameId,
+  getPoolData,
   getAllPicksWithDetails,
   deletePick,
   overridePick,

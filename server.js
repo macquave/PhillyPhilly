@@ -91,6 +91,11 @@ app.get('/api/leaderboard', (req, res) => {
   res.json(db.getLeaderboard());
 });
 
+// GET /api/pool  — all games with every player's picks grouped by side
+app.get('/api/pool', (req, res) => {
+  res.json(db.getPoolData());
+});
+
 // ---------------------------------------------------------------------------
 // Admin endpoints (password-protected)
 // ---------------------------------------------------------------------------
