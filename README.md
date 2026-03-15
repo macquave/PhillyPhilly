@@ -106,3 +106,4 @@ A pick is **correct** if your chosen team covers the spread:
 - **Database:** SQLite (file-based, zero config)
 - **Odds:** [The Odds API](https://the-odds-api.com) — free tier, 500 req/month
 - **Frontend:** Vanilla HTML/CSS/JS (no build step, works on any phone)
+
