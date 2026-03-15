@@ -1,6 +1,10 @@
 /**
  * Simple JSON file database — no native dependencies needed.
  * Stores all data in picks.json next to this file.
+ *
+ * Write queue: all functions that modify the file are serialized through
+ * withLock() so concurrent requests always read the latest saved state
+ * before writing, preventing any pick from being silently dropped.
  */
 const fs   = require('fs');
 const path = require('path');
@@ -10,6 +14,19 @@ const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'picks.json');
 // Ensure the directory exists
 const DB_DIR = path.dirname(DB_PATH);
 if (!fs.existsSync(DB_DIR)) fs.mkdirSync(DB_DIR, { recursive: true });
+
+// ---------------------------------------------------------------------------
+// Write queue — serializes all read-modify-write operations
+// ---------------------------------------------------------------------------
+let _writeChain = Promise.resolve();
+
+// Runs fn() after all previous write operations have completed.
+// Returns a Promise that resolves with fn()'s return value.
+function withLock(fn) {
+  const next = _writeChain.then(fn);
+  _writeChain = next.catch(() => {}); // keep chain alive even if fn throws
+  return next;
+}
 
 // ---------------------------------------------------------------------------
 // Load / Save
@@ -34,13 +51,15 @@ function nextId(collection) {
 // Users
 // ---------------------------------------------------------------------------
 function getOrCreateUser(name) {
-  const db = load();
-  const existing = db.users.find(u => u.name.toLowerCase() === name.toLowerCase());
-  if (existing) return existing;
-  const user = { id: nextId(db.users), name, created_at: new Date().toISOString() };
-  db.users.push(user);
-  save(db);
-  return user;
+  return withLock(() => {
+    const db = load();
+    const existing = db.users.find(u => u.name.toLowerCase() === name.toLowerCase());
+    if (existing) return existing;
+    const user = { id: nextId(db.users), name, created_at: new Date().toISOString() };
+    db.users.push(user);
+    save(db);
+    return user;
+  });
 }
 
 function getAllUsers() {
@@ -51,25 +70,27 @@ function getAllUsers() {
 // Games
 // ---------------------------------------------------------------------------
 function upsertGame({ odds_api_id, home_team, away_team, spread_home, game_time, round }) {
-  const db = load();
-  const idx = db.games.findIndex(g => g.odds_api_id === odds_api_id);
-  if (idx >= 0) {
-    db.games[idx] = { ...db.games[idx], home_team, away_team, spread_home, game_time, round };
-  } else {
-    db.games.push({
-      id: nextId(db.games),
-      odds_api_id,
-      home_team, away_team,
-      spread_home,
-      game_time,
-      round,
-      home_score: null,
-      away_score: null,
-      is_final: false,
-      created_at: new Date().toISOString(),
-    });
-  }
-  save(db);
+  return withLock(() => {
+    const db = load();
+    const idx = db.games.findIndex(g => g.odds_api_id === odds_api_id);
+    if (idx >= 0) {
+      db.games[idx] = { ...db.games[idx], home_team, away_team, spread_home, game_time, round };
+    } else {
+      db.games.push({
+        id: nextId(db.games),
+        odds_api_id,
+        home_team, away_team,
+        spread_home,
+        game_time,
+        round,
+        home_score: null,
+        away_score: null,
+        is_final: false,
+        created_at: new Date().toISOString(),
+      });
+    }
+    save(db);
+  });
 }
 
 function getGame(id) {
@@ -86,48 +107,54 @@ function getAllGames() {
 }
 
 function updateGameResult({ odds_api_id, home_score, away_score, is_final }) {
-  const db = load();
-  const game = db.games.find(g => g.odds_api_id === odds_api_id);
-  if (!game) return;
-  game.home_score = home_score;
-  game.away_score = away_score;
-  game.is_final   = is_final;
-  save(db);
-  if (is_final) gradePicksForGame(db, game.id);
+  return withLock(() => {
+    const db = load();
+    const game = db.games.find(g => g.odds_api_id === odds_api_id);
+    if (!game) return;
+    game.home_score = home_score;
+    game.away_score = away_score;
+    game.is_final   = is_final;
+    save(db);
+    if (is_final) gradePicksForGame(db, game.id);
+  });
 }
 
 function updateGameResultById({ game_id, home_score, away_score }) {
-  const db = load();
-  const game = db.games.find(g => g.id === Number(game_id));
-  if (!game) return;
-  game.home_score = home_score;
-  game.away_score = away_score;
-  game.is_final   = true;
-  save(db);
-  gradePicksForGame(db, game.id);
+  return withLock(() => {
+    const db = load();
+    const game = db.games.find(g => g.id === Number(game_id));
+    if (!game) return;
+    game.home_score = home_score;
+    game.away_score = away_score;
+    game.is_final   = true;
+    save(db);
+    gradePicksForGame(db, game.id);
+  });
 }
 
 // ---------------------------------------------------------------------------
 // Picks
 // ---------------------------------------------------------------------------
 function savePick({ user_id, game_id, picked_team }) {
-  const db = load();
-  const existing = db.picks.find(p => p.user_id === Number(user_id) && p.game_id === Number(game_id));
-  if (existing) {
-    existing.picked_team = picked_team;
-    existing.is_correct  = null;
-  } else {
-    db.picks.push({
-      id: nextId(db.picks),
-      user_id: Number(user_id),
-      game_id: Number(game_id),
-      picked_team,
-      is_correct: null,
-      created_at: new Date().toISOString(),
-    });
-  }
-  save(db);
-  return db.picks.find(p => p.user_id === Number(user_id) && p.game_id === Number(game_id));
+  return withLock(() => {
+    const db = load();
+    const existing = db.picks.find(p => p.user_id === Number(user_id) && p.game_id === Number(game_id));
+    if (existing) {
+      existing.picked_team = picked_team;
+      existing.is_correct  = null;
+    } else {
+      db.picks.push({
+        id: nextId(db.picks),
+        user_id: Number(user_id),
+        game_id: Number(game_id),
+        picked_team,
+        is_correct: null,
+        created_at: new Date().toISOString(),
+      });
+    }
+    save(db);
+    return db.picks.find(p => p.user_id === Number(user_id) && p.game_id === Number(game_id));
+  });
 }
 
 function getPicksForUser(user_id) {
@@ -218,50 +245,58 @@ function getAllPicksWithDetails() {
 
 // Delete a single pick by id
 function deletePick(pick_id) {
-  const data = load();
-  const idx = data.picks.findIndex(p => p.id === Number(pick_id));
-  if (idx === -1) return false;
-  data.picks.splice(idx, 1);
-  save(data);
-  return true;
+  return withLock(() => {
+    const data = load();
+    const idx = data.picks.findIndex(p => p.id === Number(pick_id));
+    if (idx === -1) return false;
+    data.picks.splice(idx, 1);
+    save(data);
+    return true;
+  });
 }
 
 // Override a pick's chosen team (admin can change after lock)
 function overridePick(pick_id, picked_team) {
-  const data = load();
-  const pick = data.picks.find(p => p.id === Number(pick_id));
-  if (!pick) return false;
-  pick.picked_team = picked_team;
-  pick.is_correct  = null; // reset grading — will re-grade if game is final
-  save(data);
-  // Re-grade if the game is already final
-  const game = data.games.find(g => g.id === pick.game_id);
-  if (game && game.is_final) gradePicksForGame(data, game.id);
-  return true;
+  return withLock(() => {
+    const data = load();
+    const pick = data.picks.find(p => p.id === Number(pick_id));
+    if (!pick) return false;
+    pick.picked_team = picked_team;
+    pick.is_correct  = null; // reset grading — will re-grade if game is final
+    save(data);
+    // Re-grade if the game is already final
+    const game = data.games.find(g => g.id === pick.game_id);
+    if (game && game.is_final) gradePicksForGame(data, game.id);
+    return true;
+  });
 }
 
 // Rename a user
 function renameUser(user_id, new_name) {
-  const data = load();
-  const user = data.users.find(u => u.id === Number(user_id));
-  if (!user) return false;
-  // Check name not already taken
-  const taken = data.users.find(u => u.name.toLowerCase() === new_name.toLowerCase() && u.id !== Number(user_id));
-  if (taken) return false;
-  user.name = new_name;
-  save(data);
-  return true;
+  return withLock(() => {
+    const data = load();
+    const user = data.users.find(u => u.id === Number(user_id));
+    if (!user) return false;
+    // Check name not already taken
+    const taken = data.users.find(u => u.name.toLowerCase() === new_name.toLowerCase() && u.id !== Number(user_id));
+    if (taken) return false;
+    user.name = new_name;
+    save(data);
+    return true;
+  });
 }
 
 // Delete a user and all their picks
 function deleteUser(user_id) {
-  const data = load();
-  const idx = data.users.findIndex(u => u.id === Number(user_id));
-  if (idx === -1) return false;
-  data.users.splice(idx, 1);
-  data.picks = data.picks.filter(p => p.user_id !== Number(user_id));
-  save(data);
-  return true;
+  return withLock(() => {
+    const data = load();
+    const idx = data.users.findIndex(u => u.id === Number(user_id));
+    if (idx === -1) return false;
+    data.users.splice(idx, 1);
+    data.picks = data.picks.filter(p => p.user_id !== Number(user_id));
+    save(data);
+    return true;
+  });
 }
 
 module.exports = {

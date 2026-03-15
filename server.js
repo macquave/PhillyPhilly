@@ -21,12 +21,12 @@ app.use(express.static(staticDir));
 
 // POST /api/login  { name }
 // Returns the user object (creates if new)
-app.post('/api/login', (req, res) => {
+app.post('/api/login', async (req, res) => {
   const name = req.body.name?.trim();
   if (!name) return res.status(400).json({ error: 'Name is required' });
   if (name.length > 30) return res.status(400).json({ error: 'Name too long (max 30 chars)' });
   try {
-    const user = db.getOrCreateUser(name);
+    const user = await db.getOrCreateUser(name);
     res.json(user);
   } catch (err) {
     res.status(500).json({ error: 'Could not create user' });
@@ -56,7 +56,7 @@ app.get('/api/picks/:userId', (req, res) => {
 });
 
 // POST /api/picks  { userId, gameId, pickedTeam: 'home'|'away' }
-app.post('/api/picks', (req, res) => {
+app.post('/api/picks', async (req, res) => {
   const { userId, gameId, pickedTeam } = req.body;
 
   if (!userId || !gameId || !pickedTeam) {
@@ -75,7 +75,7 @@ app.post('/api/picks', (req, res) => {
   }
 
   try {
-    const pick = db.savePick({ user_id: userId, game_id: gameId, picked_team: pickedTeam });
+    const pick = await db.savePick({ user_id: userId, game_id: gameId, picked_team: pickedTeam });
     res.json(pick);
   } catch (err) {
     res.status(500).json({ error: 'Could not save pick' });
@@ -113,13 +113,13 @@ app.post('/api/admin/sync', adminAuth, async (req, res) => {
 
 // POST /api/admin/result  — manually enter a game result
 // Body: { adminPassword, gameId, homeScore, awayScore }
-app.post('/api/admin/result', adminAuth, (req, res) => {
+app.post('/api/admin/result', adminAuth, async (req, res) => {
   const { gameId, homeScore, awayScore } = req.body;
   if (gameId == null || homeScore == null || awayScore == null) {
     return res.status(400).json({ error: 'gameId, homeScore, awayScore required' });
   }
   try {
-    db.updateGameResultById({
+    await db.updateGameResultById({
       game_id: parseInt(gameId, 10),
       home_score: parseInt(homeScore, 10),
       away_score: parseInt(awayScore, 10),
@@ -132,13 +132,13 @@ app.post('/api/admin/result', adminAuth, (req, res) => {
 
 // POST /api/admin/game  — manually add a game (if API doesn't have it)
 // Body: { adminPassword, homeTeam, awayTeam, spreadHome, gameTime, round }
-app.post('/api/admin/game', adminAuth, (req, res) => {
+app.post('/api/admin/game', adminAuth, async (req, res) => {
   const { homeTeam, awayTeam, spreadHome, gameTime, round } = req.body;
   if (!homeTeam || !awayTeam || !gameTime) {
     return res.status(400).json({ error: 'homeTeam, awayTeam, gameTime required' });
   }
   try {
-    db.upsertGame({
+    await db.upsertGame({
       odds_api_id: `manual_${Date.now()}`,
       home_team: homeTeam,
       away_team: awayTeam,
@@ -163,30 +163,30 @@ app.get('/api/admin/users', adminAuth, (req, res) => {
 });
 
 // DELETE /api/admin/picks/:pickId
-app.delete('/api/admin/picks/:pickId', adminAuth, (req, res) => {
-  const ok = db.deletePick(req.params.pickId);
+app.delete('/api/admin/picks/:pickId', adminAuth, async (req, res) => {
+  const ok = await db.deletePick(req.params.pickId);
   ok ? res.json({ success: true }) : res.status(404).json({ error: 'Pick not found' });
 });
 
 // PUT /api/admin/picks/:pickId — override picked team
-app.put('/api/admin/picks/:pickId', adminAuth, (req, res) => {
+app.put('/api/admin/picks/:pickId', adminAuth, async (req, res) => {
   const { pickedTeam } = req.body;
   if (!['home','away'].includes(pickedTeam)) return res.status(400).json({ error: 'Invalid team' });
-  const ok = db.overridePick(req.params.pickId, pickedTeam);
+  const ok = await db.overridePick(req.params.pickId, pickedTeam);
   ok ? res.json({ success: true }) : res.status(404).json({ error: 'Pick not found' });
 });
 
 // PUT /api/admin/users/:userId — rename user
-app.put('/api/admin/users/:userId', adminAuth, (req, res) => {
+app.put('/api/admin/users/:userId', adminAuth, async (req, res) => {
   const { name } = req.body;
   if (!name?.trim()) return res.status(400).json({ error: 'Name required' });
-  const ok = db.renameUser(req.params.userId, name.trim());
+  const ok = await db.renameUser(req.params.userId, name.trim());
   ok ? res.json({ success: true }) : res.status(400).json({ error: 'User not found or name taken' });
 });
 
 // DELETE /api/admin/users/:userId — delete user + all their picks
-app.delete('/api/admin/users/:userId', adminAuth, (req, res) => {
-  const ok = db.deleteUser(req.params.userId);
+app.delete('/api/admin/users/:userId', adminAuth, async (req, res) => {
+  const ok = await db.deleteUser(req.params.userId);
   ok ? res.json({ success: true }) : res.status(404).json({ error: 'User not found' });
 });
 
