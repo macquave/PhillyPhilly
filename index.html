@@ -38,6 +38,17 @@
       />
       <button type="submit" class="btn btn-primary btn-lg">Let's Go! 🏆</button>
     </form>
+
+    <!-- Install App button — shown only when not already installed -->
+    <div id="install-banner" class="install-banner hidden">
+      <button id="install-btn" class="btn btn-secondary install-btn">📲 Add to Home Screen</button>
+      <!-- iOS tip shown instead of native prompt on Safari -->
+      <div id="ios-tip" class="ios-tip hidden">
+        <div class="ios-tip-arrow"></div>
+        Tap <strong>Share</strong> <span class="share-icon">⬆</span> then
+        <strong>"Add to Home Screen"</strong>
+      </div>
+    </div>
   </div>
 </div>
 

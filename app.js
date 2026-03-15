@@ -794,3 +794,49 @@ if ('serviceWorker' in navigator) {
     });
   });
 }
+
+// ---------------------------------------------------------------------------
+// Install / Add to Home Screen
+// ---------------------------------------------------------------------------
+(function () {
+  // Don't show if already running as installed PWA
+  if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) return;
+
+  const banner   = $('#install-banner');
+  const btn      = $('#install-btn');
+  const iosTip   = $('#ios-tip');
+
+  const isIos    = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isSafari = /safari/i.test(navigator.userAgent) && !/chrome|crios|fxios/i.test(navigator.userAgent);
+
+  let deferredPrompt = null; // Android/Chrome install prompt
+
+  // Android: capture the browser's install prompt so we can replay it
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    deferredPrompt = e;
+    show(banner);
+  });
+
+  // iOS Safari: show the banner immediately with the tip toggle
+  if (isIos && isSafari) {
+    show(banner);
+  }
+
+  btn.addEventListener('click', () => {
+    if (deferredPrompt) {
+      // Android — fire the native prompt
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then(() => {
+        deferredPrompt = null;
+        hide(banner);
+      });
+    } else if (isIos) {
+      // iOS — toggle the instruction tip
+      iosTip.classList.toggle('hidden');
+    }
+  });
+
+  // Hide banner once app is installed
+  window.addEventListener('appinstalled', () => hide(banner));
+})();
