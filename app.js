@@ -785,3 +785,12 @@ async function adminFetch(method, url, body) {
 if (!tryRestoreSession()) {
   show($('#login-screen'));
 }
+
+// Register service worker for PWA (Add to Home Screen support)
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(err => {
+      console.warn('Service worker registration failed:', err);
+    });
+  });
+}
