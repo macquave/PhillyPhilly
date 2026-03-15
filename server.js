@@ -204,6 +204,6 @@ app.listen(PORT, () => {
   console.log(`\n🏀  March Madness Picks running on http://localhost:${PORT}\n`);
 });
 
-// Sync odds on startup, then every 15 minutes
+// Sync odds on startup, then every 2 hours
 oddsApi.syncAll().catch(console.error);
-setInterval(() => oddsApi.syncAll().catch(console.error), 15 * 60 * 1000);
+setInterval(() => oddsApi.syncAll().catch(console.error), 2 * 60 * 60 * 1000);
