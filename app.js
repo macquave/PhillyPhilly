@@ -745,6 +745,26 @@ $('#admin-load-users-btn')?.addEventListener('click', async () => {
 });
 
 // ---------------------------------------------------------------------------
+// Admin: Export CSV
+// ---------------------------------------------------------------------------
+$('#admin-export-btn')?.addEventListener('click', () => {
+  const pw = getAdminPw();
+  if (!pw) {
+    showResult('admin-export-msg', 'Enter the admin password first.', false);
+    return;
+  }
+  // Trigger a direct browser download by navigating to the export URL
+  const url = `/api/admin/export?pw=${encodeURIComponent(pw)}`;
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = '';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  showResult('admin-export-msg', 'Download started!', true);
+});
+
+// ---------------------------------------------------------------------------
 // Admin fetch helper (includes password header)
 // ---------------------------------------------------------------------------
 async function adminFetch(method, url, body) {

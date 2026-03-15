@@ -110,6 +110,12 @@
       <input type="password" id="admin-pw" placeholder="Password" />
 
       <hr/>
+      <h3>Export All Picks</h3>
+      <p class="hint">Download a CSV of every player's picks — open in Excel, Numbers, or paste into Google Sheets.</p>
+      <button class="btn btn-secondary" id="admin-export-btn">⬇ Download CSV</button>
+      <div id="admin-export-msg" class="result-msg"></div>
+
+      <hr/>
       <h3>Sync Games &amp; Scores</h3>
       <p class="hint">Pulls latest games and spreads from The Odds API, then grades completed picks.</p>
       <button class="btn btn-secondary" id="admin-sync-btn">Sync Now</button>

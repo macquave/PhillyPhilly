@@ -157,6 +157,30 @@ app.get('/api/admin/picks', adminAuth, (req, res) => {
   res.json(db.getAllPicksWithDetails());
 });
 
+// GET /api/admin/export?pw=PASSWORD — download all picks as CSV
+// Password passed as query param so the browser can trigger a direct download
+app.get('/api/admin/export', (req, res) => {
+  const pw = req.query.pw || '';
+  if (pw !== ADMIN_PASSWORD) return res.status(401).send('Unauthorized');
+
+  const picks = db.getAllPicksWithDetails();
+  const lines = [
+    ['Player', 'Round', 'Game', 'Game Time', 'Their Pick', 'Result'].join(','),
+    ...picks.map(p => {
+      const game     = `${p.away_team} @ ${p.home_team}`;
+      const pick     = p.picked_team === 'home' ? p.home_team : p.away_team;
+      const result   = p.is_correct === 1 ? 'Correct' : p.is_correct === 0 ? 'Wrong' : p.is_correct === -1 ? 'Push' : 'Pending';
+      const gameTime = new Date(p.game_time).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+      // Wrap fields in quotes to handle commas in team names
+      return [p.user_name, p.round, game, gameTime, pick, result].map(f => `"${f ?? ''}"`).join(',');
+    }),
+  ];
+
+  res.setHeader('Content-Type', 'text/csv');
+  res.setHeader('Content-Disposition', `attachment; filename="picks-${new Date().toISOString().slice(0,10)}.csv"`);
+  res.send(lines.join('\n'));
+});
+
 // GET /api/admin/users — all users
 app.get('/api/admin/users', adminAuth, (req, res) => {
   res.json(db.getAllUsers());
