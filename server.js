@@ -152,6 +152,44 @@ app.post('/api/admin/game', adminAuth, (req, res) => {
   }
 });
 
+// GET /api/admin/picks — all picks with user + game details
+app.get('/api/admin/picks', adminAuth, (req, res) => {
+  res.json(db.getAllPicksWithDetails());
+});
+
+// GET /api/admin/users — all users
+app.get('/api/admin/users', adminAuth, (req, res) => {
+  res.json(db.getAllUsers());
+});
+
+// DELETE /api/admin/picks/:pickId
+app.delete('/api/admin/picks/:pickId', adminAuth, (req, res) => {
+  const ok = db.deletePick(req.params.pickId);
+  ok ? res.json({ success: true }) : res.status(404).json({ error: 'Pick not found' });
+});
+
+// PUT /api/admin/picks/:pickId — override picked team
+app.put('/api/admin/picks/:pickId', adminAuth, (req, res) => {
+  const { pickedTeam } = req.body;
+  if (!['home','away'].includes(pickedTeam)) return res.status(400).json({ error: 'Invalid team' });
+  const ok = db.overridePick(req.params.pickId, pickedTeam);
+  ok ? res.json({ success: true }) : res.status(404).json({ error: 'Pick not found' });
+});
+
+// PUT /api/admin/users/:userId — rename user
+app.put('/api/admin/users/:userId', adminAuth, (req, res) => {
+  const { name } = req.body;
+  if (!name?.trim()) return res.status(400).json({ error: 'Name required' });
+  const ok = db.renameUser(req.params.userId, name.trim());
+  ok ? res.json({ success: true }) : res.status(400).json({ error: 'User not found or name taken' });
+});
+
+// DELETE /api/admin/users/:userId — delete user + all their picks
+app.delete('/api/admin/users/:userId', adminAuth, (req, res) => {
+  const ok = db.deleteUser(req.params.userId);
+  ok ? res.json({ success: true }) : res.status(404).json({ error: 'User not found' });
+});
+
 // ---------------------------------------------------------------------------
 // Serve the SPA for any unmatched route
 // ---------------------------------------------------------------------------

@@ -191,6 +191,79 @@ function getLeaderboard() {
   }).sort((a, b) => b.correct - a.correct || b.total_picks - a.total_picks);
 }
 
+// ---------------------------------------------------------------------------
+// Admin helpers
+// ---------------------------------------------------------------------------
+
+// Get all picks enriched with user + game info (for admin view)
+function getAllPicksWithDetails() {
+  const data = load();
+  return data.picks.map(p => {
+    const user = data.users.find(u => u.id === p.user_id) || {};
+    const game = data.games.find(g => g.id === p.game_id) || {};
+    return {
+      ...p,
+      user_name:  user.name,
+      home_team:  game.home_team,
+      away_team:  game.away_team,
+      spread_home: game.spread_home,
+      game_time:  game.game_time,
+      round:      game.round,
+      is_final:   game.is_final,
+      home_score: game.home_score,
+      away_score: game.away_score,
+    };
+  }).sort((a, b) => new Date(a.game_time) - new Date(b.game_time));
+}
+
+// Delete a single pick by id
+function deletePick(pick_id) {
+  const data = load();
+  const idx = data.picks.findIndex(p => p.id === Number(pick_id));
+  if (idx === -1) return false;
+  data.picks.splice(idx, 1);
+  save(data);
+  return true;
+}
+
+// Override a pick's chosen team (admin can change after lock)
+function overridePick(pick_id, picked_team) {
+  const data = load();
+  const pick = data.picks.find(p => p.id === Number(pick_id));
+  if (!pick) return false;
+  pick.picked_team = picked_team;
+  pick.is_correct  = null; // reset grading — will re-grade if game is final
+  save(data);
+  // Re-grade if the game is already final
+  const game = data.games.find(g => g.id === pick.game_id);
+  if (game && game.is_final) gradePicksForGame(data, game.id);
+  return true;
+}
+
+// Rename a user
+function renameUser(user_id, new_name) {
+  const data = load();
+  const user = data.users.find(u => u.id === Number(user_id));
+  if (!user) return false;
+  // Check name not already taken
+  const taken = data.users.find(u => u.name.toLowerCase() === new_name.toLowerCase() && u.id !== Number(user_id));
+  if (taken) return false;
+  user.name = new_name;
+  save(data);
+  return true;
+}
+
+// Delete a user and all their picks
+function deleteUser(user_id) {
+  const data = load();
+  const idx = data.users.findIndex(u => u.id === Number(user_id));
+  if (idx === -1) return false;
+  data.users.splice(idx, 1);
+  data.picks = data.picks.filter(p => p.user_id !== Number(user_id));
+  save(data);
+  return true;
+}
+
 module.exports = {
   getOrCreateUser,
   getAllUsers,
@@ -203,4 +276,9 @@ module.exports = {
   getPicksForUser,
   getLeaderboard,
   gradePicksByGameId,
+  getAllPicksWithDetails,
+  deletePick,
+  overridePick,
+  renameUser,
+  deleteUser,
 };

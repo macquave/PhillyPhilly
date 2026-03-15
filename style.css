@@ -507,6 +507,61 @@ label { display: block; font-size: .8rem; color: var(--muted); margin-bottom: 4p
 .score-row > div { flex: 1; }
 .vs-divider { font-size: 1.2rem; font-weight: 900; color: var(--muted); padding-top: 20px; }
 
+/* --- Admin list rows ------------------------------------ */
+.admin-list { margin-top: 12px; }
+
+.admin-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 8px;
+}
+
+.admin-row-name {
+  flex: 1;
+  font-weight: 600;
+  font-size: .9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-row-pick {
+  font-size: .78rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 8px;
+  white-space: nowrap;
+  background: rgba(232,86,26,.18);
+  color: var(--primary);
+}
+
+.admin-row-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.btn-small {
+  font-size: .75rem;
+  font-weight: 700;
+  padding: 5px 10px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  background: var(--surface);
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  transition: background .15s, color .15s;
+}
+.btn-small:hover { background: var(--border); color: var(--text); }
+.btn-small.btn-danger { color: var(--danger); border-color: rgba(239,68,68,.3); }
+.btn-small.btn-danger:hover { background: rgba(239,68,68,.15); }
+
 /* --- Util ----------------------------------------------- */
 .text-success { color: var(--success); }
 .text-danger  { color: var(--danger); }

@@ -473,6 +473,7 @@ if (location.hash === '#admin') openAdminPanel();
 function openAdminPanel() {
   show($('#admin-modal'));
   populateAdminGameSelect();
+  populateAdminPicksGameSelect();
 }
 
 $('#admin-close')?.addEventListener('click', () => hide($('#admin-modal')));
@@ -602,6 +603,161 @@ $('#mg-add-btn')?.addEventListener('click', async () => {
     showResult('mg-result-msg', err.message, false);
   }
 });
+
+// ---------------------------------------------------------------------------
+// Admin: Manage Picks
+// ---------------------------------------------------------------------------
+async function populateAdminPicksGameSelect() {
+  const sel = $('#admin-picks-game-select');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">— select a game —</option>';
+  try {
+    const games = await apiGet('/api/games');
+    for (const g of games) {
+      const opt = document.createElement('option');
+      opt.value = g.id;
+      opt.textContent = `${g.away_team} @ ${g.home_team} — ${formatGameTime(g.game_time)}`;
+      sel.appendChild(opt);
+    }
+  } catch (_) {}
+}
+
+$('#admin-load-picks-btn')?.addEventListener('click', async () => {
+  const gameId = $('#admin-picks-game-select')?.value;
+  if (!gameId) { alert('Select a game first.'); return; }
+  const container = $('#admin-picks-list');
+  container.innerHTML = '<div class="loading">Loading picks…</div>';
+
+  try {
+    const allPicks = await adminFetch('GET', '/api/admin/picks');
+    const gamePicks = allPicks.filter(p => String(p.game_id) === String(gameId));
+
+    container.innerHTML = '';
+    if (gamePicks.length === 0) {
+      container.innerHTML = '<p class="hint">No picks for this game yet.</p>';
+      return;
+    }
+
+    for (const p of gamePicks) {
+      const row = document.createElement('div');
+      row.className = 'admin-row';
+      row.dataset.pickId = p.id;
+      const otherTeam = p.picked_team === 'home' ? 'away' : 'home';
+      row.innerHTML = `
+        <span class="admin-row-name">${p.user_name}</span>
+        <span class="admin-row-pick picked-${p.picked_team}">${p.picked_team === 'home' ? p.home_team : p.away_team}</span>
+        <div class="admin-row-actions">
+          <button class="btn-small btn-override" data-pick-id="${p.id}" data-other="${otherTeam}" data-home="${p.home_team}" data-away="${p.away_team}">Switch</button>
+          <button class="btn-small btn-danger btn-del-pick" data-pick-id="${p.id}">Delete</button>
+        </div>
+      `;
+      container.appendChild(row);
+    }
+
+    // Wire up buttons
+    container.querySelectorAll('.btn-del-pick').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('Delete this pick?')) return;
+        try {
+          await adminFetch('DELETE', `/api/admin/picks/${btn.dataset.pickId}`);
+          btn.closest('.admin-row').remove();
+        } catch (err) { alert(err.message); }
+      });
+    });
+
+    container.querySelectorAll('.btn-override').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const newTeam = btn.dataset.other; // switch to the other side
+        const teamName = newTeam === 'home' ? btn.dataset.home : btn.dataset.away;
+        if (!confirm(`Switch this pick to ${teamName}?`)) return;
+        try {
+          await adminFetch('PUT', `/api/admin/picks/${btn.dataset.pickId}`, { pickedTeam: newTeam });
+          // Reload the list
+          $('#admin-load-picks-btn').click();
+        } catch (err) { alert(err.message); }
+      });
+    });
+
+  } catch (err) {
+    container.innerHTML = `<p class="hint err">Error: ${err.message}</p>`;
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Admin: Manage Users
+// ---------------------------------------------------------------------------
+$('#admin-load-users-btn')?.addEventListener('click', async () => {
+  const container = $('#admin-users-list');
+  container.innerHTML = '<div class="loading">Loading users…</div>';
+
+  try {
+    const users = await adminFetch('GET', '/api/admin/users');
+    container.innerHTML = '';
+
+    if (users.length === 0) {
+      container.innerHTML = '<p class="hint">No users yet.</p>';
+      return;
+    }
+
+    for (const u of users) {
+      const row = document.createElement('div');
+      row.className = 'admin-row';
+      row.dataset.userId = u.id;
+      row.innerHTML = `
+        <span class="admin-row-name" id="uname-${u.id}">${u.name}</span>
+        <div class="admin-row-actions">
+          <button class="btn-small btn-rename" data-user-id="${u.id}">Rename</button>
+          <button class="btn-small btn-danger btn-del-user" data-user-id="${u.id}">Delete</button>
+        </div>
+      `;
+      container.appendChild(row);
+    }
+
+    // Rename
+    container.querySelectorAll('.btn-rename').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const current = $(`#uname-${btn.dataset.userId}`)?.textContent || '';
+        const newName = prompt('Enter new name:', current)?.trim();
+        if (!newName || newName === current) return;
+        try {
+          await adminFetch('PUT', `/api/admin/users/${btn.dataset.userId}`, { name: newName });
+          const nameEl = $(`#uname-${btn.dataset.userId}`);
+          if (nameEl) nameEl.textContent = newName;
+        } catch (err) { alert(err.message); }
+      });
+    });
+
+    // Delete
+    container.querySelectorAll('.btn-del-user').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const name = $(`#uname-${btn.dataset.userId}`)?.textContent || 'this user';
+        if (!confirm(`Delete ${name} and ALL their picks? This cannot be undone.`)) return;
+        try {
+          await adminFetch('DELETE', `/api/admin/users/${btn.dataset.userId}`);
+          btn.closest('.admin-row').remove();
+        } catch (err) { alert(err.message); }
+      });
+    });
+
+  } catch (err) {
+    container.innerHTML = `<p class="hint err">Error: ${err.message}</p>`;
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Admin fetch helper (includes password header)
+// ---------------------------------------------------------------------------
+async function adminFetch(method, url, body) {
+  const opts = {
+    method,
+    headers: { 'Content-Type': 'application/json', 'x-admin-password': getAdminPw() },
+  };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(url, opts);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Request failed');
+  return data;
+}
 
 // ---------------------------------------------------------------------------
 // Boot
