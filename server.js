@@ -8,9 +8,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'brackets2026';
 
-app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
-
+phillyphilly-production.up.railway.app
 // ---------------------------------------------------------------------------
 // Users
 // ---------------------------------------------------------------------------
@@ -152,7 +150,7 @@ app.post('/api/admin/game', adminAuth, (req, res) => {
 // Serve the SPA for any unmatched route
 // ---------------------------------------------------------------------------
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(staticDir, 'index.html'));
 });
 
 // ---------------------------------------------------------------------------
