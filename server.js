@@ -106,6 +106,11 @@ function adminAuth(req, res, next) {
   next();
 }
 
+// GET /api/admin/quota — current Odds API usage (from last sync's response headers)
+app.get('/api/admin/quota', adminAuth, (req, res) => {
+  res.json(oddsApi.getQuota());
+});
+
 // POST /api/admin/sync  — manually trigger odds/score sync
 app.post('/api/admin/sync', adminAuth, async (req, res) => {
   try {

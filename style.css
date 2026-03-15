@@ -792,6 +792,48 @@ label { display: block; font-size: .8rem; color: var(--muted); margin-bottom: 4p
   letter-spacing: .03em;
 }
 
+/* --- Admin: API Quota widget ---------------------------- */
+.quota-box {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  margin-top: 8px;
+}
+
+.quota-numbers {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: .88rem;
+  color: var(--text-dim);
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.quota-numbers strong { color: var(--text); font-size: 1rem; }
+.quota-sep { color: var(--border); }
+
+.quota-bar-wrap { margin-bottom: 6px; }
+.quota-bar-track {
+  height: 6px;
+  background: var(--border);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.quota-bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  background: var(--primary);
+  transition: width .4s ease;
+}
+.quota-bar-fill.quota-bar--warn   { background: #f59e0b; }
+.quota-bar-fill.quota-bar--danger { background: var(--danger); }
+
+.quota-updated {
+  margin-top: 4px;
+  font-size: .75rem;
+}
+
 /* --- Util ----------------------------------------------- */
 .text-success { color: var(--success); }
 .text-danger  { color: var(--danger); }

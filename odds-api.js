@@ -12,6 +12,25 @@ const db = require('./db');
 const API_KEY = process.env.ODDS_API_KEY;
 const BASE_URL = 'https://api.the-odds-api.com/v4';
 const SPORT = 'basketball_ncaab';
+
+// ---------------------------------------------------------------------------
+// Quota tracking — updated after every successful API call
+// ---------------------------------------------------------------------------
+let _quota = { used: null, remaining: null, updatedAt: null };
+
+function updateQuota(headers) {
+  const used      = headers['x-requests-used'];
+  const remaining = headers['x-requests-remaining'];
+  if (used != null || remaining != null) {
+    _quota = {
+      used:      used      != null ? parseInt(used, 10)      : _quota.used,
+      remaining: remaining != null ? parseInt(remaining, 10) : _quota.remaining,
+      updatedAt: new Date().toISOString(),
+    };
+  }
+}
+
+function getQuota() { return { ..._quota }; }
 // Preferred bookmaker order (we pick the first one available per game)
 const PREFERRED_BOOKS = ['draftkings', 'fanduel', 'betmgm', 'bovada', 'williamhill_us'];
 
@@ -73,6 +92,7 @@ async function fetchAndSaveGames() {
       },
     });
 
+    updateQuota(res.headers);
     const games = res.data;
     console.log(`[odds-api] Fetched ${games.length} NCAAB games`);
 
@@ -105,6 +125,7 @@ async function fetchAndSaveScores() {
       },
     });
 
+    updateQuota(res.headers);
     const scores = res.data;
     let updated = 0;
 
@@ -134,4 +155,4 @@ async function syncAll() {
   await fetchAndSaveScores();
 }
 
-module.exports = { syncAll, fetchAndSaveGames, fetchAndSaveScores };
+module.exports = { syncAll, fetchAndSaveGames, fetchAndSaveScores, getQuota };

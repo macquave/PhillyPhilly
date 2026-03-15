@@ -136,6 +136,24 @@
       <div id="admin-export-msg" class="result-msg"></div>
 
       <hr/>
+      <h3>API Quota</h3>
+      <div id="admin-quota-box" class="quota-box">
+        <div class="quota-numbers">
+          <span><strong id="quota-used">—</strong> used</span>
+          <span class="quota-sep">·</span>
+          <span><strong id="quota-remaining">—</strong> remaining</span>
+          <span class="quota-sep">·</span>
+          <span>500 / month</span>
+        </div>
+        <div class="quota-bar-wrap">
+          <div class="quota-bar-track">
+            <div class="quota-bar-fill" id="quota-bar-fill" style="width:0%"></div>
+          </div>
+        </div>
+        <div id="quota-updated" class="hint quota-updated"></div>
+      </div>
+
+      <hr/>
       <h3>Sync Games &amp; Scores</h3>
       <p class="hint">Pulls latest games and spreads from The Odds API, then grades completed picks.</p>
       <button class="btn btn-secondary" id="admin-sync-btn">Sync Now</button>
