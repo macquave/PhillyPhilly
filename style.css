@@ -58,12 +58,12 @@ body {
 }
 
 .hero-img {
-  width: 150px;
-  height: 150px;
+  width: 260px;
+  height: 260px;
   object-fit: cover;
   border-radius: 50%;
-  border: 3px solid var(--primary);
-  box-shadow: 0 0 32px rgba(232,86,26,.5);
+  border: 4px solid var(--primary);
+  box-shadow: 0 0 48px rgba(232,86,26,.5);
 }
 
 .login-card h1 {
