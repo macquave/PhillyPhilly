@@ -2,7 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const db = require('./db');
-const oddsApi = require('./odds-api');
+const espnApi = require('./espn-api');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -106,15 +106,15 @@ function adminAuth(req, res, next) {
   next();
 }
 
-// GET /api/admin/quota — current Odds API usage (from last sync's response headers)
+// GET /api/admin/quota — sync status (kept same endpoint name for compatibility)
 app.get('/api/admin/quota', adminAuth, (req, res) => {
-  res.json(oddsApi.getQuota());
+  res.json(espnApi.getLastSync());
 });
 
-// POST /api/admin/sync  — manually trigger odds/score sync
+// POST /api/admin/sync  — manually trigger ESPN sync
 app.post('/api/admin/sync', adminAuth, async (req, res) => {
   try {
-    await oddsApi.syncAll();
+    await espnApi.syncAll();
     res.json({ success: true, message: 'Sync complete' });
   } catch (err) {
     res.status(500).json({ error: 'Sync failed', detail: err.message });
@@ -238,6 +238,6 @@ app.listen(PORT, () => {
   console.log(`\n🏀  March Madness Picks running on http://localhost:${PORT}\n`);
 });
 
-// Sync odds on startup, then every 2 hours
-oddsApi.syncAll().catch(console.error);
-setInterval(() => oddsApi.syncAll().catch(console.error), 2 * 60 * 60 * 1000);
+// Sync ESPN on startup, then every 2 hours
+espnApi.syncAll().catch(console.error);
+setInterval(() => espnApi.syncAll().catch(console.error), 2 * 60 * 60 * 1000);

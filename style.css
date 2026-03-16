@@ -834,6 +834,11 @@ label { display: block; font-size: .8rem; color: var(--muted); margin-bottom: 4p
   font-size: .75rem;
 }
 
+.sync-source {
+  font-size: .88rem;
+  color: var(--text-dim);
+}
+
 /* --- Util ----------------------------------------------- */
 .text-success { color: var(--success); }
 .text-danger  { color: var(--danger); }

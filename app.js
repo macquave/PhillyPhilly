@@ -555,26 +555,16 @@ function openAdminPanel() {
 async function refreshQuotaDisplay() {
   try {
     const q = await adminFetch('GET', '/api/admin/quota');
-    const used      = q.used      ?? 0;
-    const remaining = q.remaining ?? 500;
-    const total     = used + remaining;
-    const pct       = total > 0 ? Math.round((used / total) * 100) : 0;
-
-    $('#quota-used').textContent      = used;
-    $('#quota-remaining').textContent = remaining;
-    $('#quota-bar-fill').style.width  = `${pct}%`;
-    $('#quota-bar-fill').className    = `quota-bar-fill ${pct >= 90 ? 'quota-bar--danger' : pct >= 70 ? 'quota-bar--warn' : ''}`;
-
     if (q.updatedAt) {
       const when = new Date(q.updatedAt).toLocaleString('en-US', {
         month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
       });
       $('#quota-updated').textContent = `Last synced: ${when}`;
     } else {
-      $('#quota-updated').textContent = 'Not synced yet this session';
+      $('#quota-updated').textContent = 'Not synced yet this session — sync runs on startup and every 2 hours';
     }
   } catch {
-    $('#quota-updated').textContent = 'Could not load quota — check password';
+    $('#quota-updated').textContent = 'Could not load status — check password';
   }
 }
 
