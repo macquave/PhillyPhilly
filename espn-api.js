@@ -17,18 +17,18 @@ const ESPN_BASE = 'https://site.api.espn.com/apis/site/v2/sports/basketball/mens
 // 2026 NCAA Tournament schedule — maps each date (YYYYMMDD) to its round name
 // ---------------------------------------------------------------------------
 const ROUND_BY_DATE = {
-  '20260318': 'First Four',
-  '20260319': 'First Four',
-  '20260320': 'Round of 64',
-  '20260321': 'Round of 64',
-  '20260322': 'Round of 32',
-  '20260323': 'Round of 32',
-  '20260327': 'Sweet 16',
-  '20260328': 'Sweet 16',
-  '20260329': 'Elite 8',
-  '20260330': 'Elite 8',
-  '20260404': 'Final Four',
-  '20260406': 'Championship',
+  '20260317': 'First Four',   // Tue Mar 17
+  '20260318': 'First Four',   // Wed Mar 18
+  '20260319': 'Round of 64',  // Thu Mar 19
+  '20260320': 'Round of 64',  // Fri Mar 20
+  '20260321': 'Round of 32',  // Sat Mar 21
+  '20260322': 'Round of 32',  // Sun Mar 22
+  '20260327': 'Sweet 16',     // Thu Mar 27
+  '20260328': 'Sweet 16',     // Fri Mar 28
+  '20260329': 'Elite 8',      // Sat Mar 29
+  '20260330': 'Elite 8',      // Sun Mar 30
+  '20260404': 'Final Four',   // Sat Apr 4
+  '20260406': 'Championship', // Mon Apr 6
 };
 
 const ALL_DATES = Object.keys(ROUND_BY_DATE);
