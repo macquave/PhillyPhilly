@@ -839,6 +839,45 @@ label { display: block; font-size: .8rem; color: var(--muted); margin-bottom: 4p
   color: var(--text-dim);
 }
 
+/* --- Admin: Danger Zone --------------------------------- */
+.danger-zone {
+  border: 1.5px solid rgba(239,68,68,.35);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  background: rgba(239,68,68,.05);
+}
+
+.danger-zone-title {
+  margin: 0 0 6px;
+  font-size: .95rem;
+  color: var(--danger);
+}
+
+.danger-confirm-wrap { margin: 10px 0 8px; }
+
+.danger-label {
+  font-size: .8rem;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+  display: block;
+}
+
+.btn-danger-full {
+  width: 100%;
+  background: transparent;
+  border: 1.5px solid var(--danger);
+  color: var(--danger);
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  font-size: .9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+}
+
+.btn-danger-full:hover  { background: var(--danger); color: #fff; }
+.btn-danger-full:disabled { opacity: .5; cursor: not-allowed; }
+
 /* --- Util ----------------------------------------------- */
 .text-success { color: var(--success); }
 .text-danger  { color: var(--danger); }

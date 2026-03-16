@@ -208,6 +208,18 @@
       <p class="hint">Rename or remove a player (also removes all their picks).</p>
       <button class="btn btn-secondary" id="admin-load-users-btn">Load Users</button>
       <div id="admin-users-list" class="admin-list"></div>
+
+      <hr/>
+      <div class="danger-zone">
+        <h3 class="danger-zone-title">⚠️ Danger Zone</h3>
+        <p class="hint">Wipes all games and picks, then re-syncs fresh data from ESPN. User accounts are kept. Use this to clear old/duplicate games after switching data sources.</p>
+        <div class="danger-confirm-wrap" id="reset-confirm-wrap">
+          <label class="danger-label">Type <strong>RESET</strong> to confirm</label>
+          <input type="text" id="reset-confirm-input" placeholder="RESET" autocomplete="off" />
+        </div>
+        <button class="btn btn-danger-full" id="admin-reset-btn">Reset Database &amp; Re-Sync</button>
+        <div id="admin-reset-msg" class="result-msg"></div>
+      </div>
     </div>
   </div>
 </div>

@@ -332,6 +332,20 @@ function deleteUser(user_id) {
   });
 }
 
+// Wipe all games and picks; keep users so nobody has to re-register.
+// Returns counts of what was cleared.
+function resetDatabase() {
+  return withLock(() => {
+    const data = load();
+    const gameCount = data.games.length;
+    const pickCount = data.picks.length;
+    data.games = [];
+    data.picks = [];
+    save(data);
+    return { gamesCleared: gameCount, picksCleared: pickCount };
+  });
+}
+
 module.exports = {
   getOrCreateUser,
   getAllUsers,
@@ -350,4 +364,5 @@ module.exports = {
   overridePick,
   renameUser,
   deleteUser,
+  resetDatabase,
 };

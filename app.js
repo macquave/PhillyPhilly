@@ -838,6 +838,42 @@ $('#admin-load-users-btn')?.addEventListener('click', async () => {
 });
 
 // ---------------------------------------------------------------------------
+// Admin: Reset Database
+// ---------------------------------------------------------------------------
+$('#admin-reset-btn')?.addEventListener('click', async () => {
+  const confirmation = $('#reset-confirm-input')?.value?.trim();
+  if (confirmation !== 'RESET') {
+    showResult('admin-reset-msg', 'Type RESET in the box above to confirm.', false);
+    return;
+  }
+
+  const btn = $('#admin-reset-btn');
+  btn.disabled = true;
+  btn.textContent = 'Resetting…';
+  showResult('admin-reset-msg', '', true);
+
+  try {
+    const result = await adminFetch('POST', '/api/admin/reset');
+    showResult('admin-reset-msg',
+      `✅ Done — cleared ${result.gamesCleared} games and ${result.picksCleared} picks. Fresh ESPN data loaded.`,
+      true
+    );
+    $('#reset-confirm-input').value = '';
+    await refreshData();
+    renderPicksTab();
+    renderPoolTab();
+    await populateAdminGameSelect();
+    await populateAdminPicksGameSelect();
+    refreshQuotaDisplay();
+  } catch (err) {
+    showResult('admin-reset-msg', err.message, false);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Reset Database & Re-Sync';
+  }
+});
+
+// ---------------------------------------------------------------------------
 // Admin: Export CSV
 // ---------------------------------------------------------------------------
 $('#admin-export-btn')?.addEventListener('click', () => {

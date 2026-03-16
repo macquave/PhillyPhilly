@@ -224,6 +224,17 @@ app.delete('/api/admin/users/:userId', adminAuth, async (req, res) => {
   ok ? res.json({ success: true }) : res.status(404).json({ error: 'User not found' });
 });
 
+// POST /api/admin/reset — wipe all games & picks, then re-sync from ESPN
+app.post('/api/admin/reset', adminAuth, async (req, res) => {
+  try {
+    const counts = await db.resetDatabase();
+    await espnApi.syncAll();
+    res.json({ success: true, ...counts });
+  } catch (err) {
+    res.status(500).json({ error: 'Reset failed', detail: err.message });
+  }
+});
+
 // ---------------------------------------------------------------------------
 // Serve the SPA for any unmatched route
 // ---------------------------------------------------------------------------
