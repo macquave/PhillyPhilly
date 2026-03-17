@@ -2,7 +2,7 @@
  * Service Worker — enables PWA installability + basic offline caching
  * Static assets are cached on install; API calls always go to the network.
  */
-const CACHE_NAME = 'mm-picks-v1';
+const CACHE_NAME = 'mm-picks-v2';
 const STATIC_ASSETS = ['/', '/style.css', '/app.js', '/Joe.png'];
 
 // Cache static assets on install
