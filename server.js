@@ -249,6 +249,6 @@ app.listen(PORT, () => {
   console.log(`\n🏀  March Madness Picks running on http://localhost:${PORT}\n`);
 });
 
-// Sync ESPN on startup, then every 2 hours
+// Sync ESPN on startup, then every 30 minutes
 espnApi.syncAll().catch(console.error);
-setInterval(() => espnApi.syncAll().catch(console.error), 2 * 60 * 60 * 1000);
+setInterval(() => espnApi.syncAll().catch(console.error), 30 * 60 * 1000);
