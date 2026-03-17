@@ -135,6 +135,9 @@ async function syncAll() {
   let upserted = 0, scored = 0, skipped = 0;
 
   for (const dateStr of ALL_DATES) {
+    // First Four games are excluded — competition starts with Round of 64
+    if (ROUND_BY_DATE[dateStr] === 'First Four') continue;
+
     let events;
     try {
       events = await fetchDate(dateStr);
